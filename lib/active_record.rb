@@ -1,13 +1,6 @@
 module ActiveRecord
+  
   module AttributeMethods
-    # Prevent getter, setter, query behavior for cloaked_attr through
-    # method_missing
-    alias old_method_missing method_missing
-    def method_missing(method_id, *args, &block)
-      return super(method_id, *args, &block) if self.class.cloaked_attr_methods.include?(method_id.to_s)
-      old_method_missing(method_id, *args, &block)
-    end
-    
     module ClassMethods
       # Prevent automatic definition of cloaked_attr getter, setter, query
       # methods by AR::B
@@ -20,6 +13,18 @@ module ActiveRecord
   end
   
   class Base
+    # Prevent getter, setter, query behavior for cloaked_attr through
+    # method_missing
+    alias old_method_missing method_missing
+    def method_missing(method_id, *args, &block)
+      # For some reason, super from here gets AR::B, so we have to explicitly
+      # call method_missing on AR::B.superclass
+      if self.class.cloaked_attr_methods.include?(method_id.to_s)
+        return ActiveRecord::Base.superclass.method_missing(method_id, *args, &block)
+      end
+      old_method_missing(method_id, *args, &block)
+    end
+    
     # Allow easy listing of getter, setter, and query method names for all
     # cloaked_attrs
     def self.cloaked_attr_methods
