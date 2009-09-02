@@ -41,11 +41,18 @@ module ActiveRecord
     
     # Allow definition of cloaked_attr
     def self.attr_cloaked(*attrs)
-      attrs.each{|attr| cloaked_attrs << attr.to_s}
+      attrs.each{|attr| cloaked_attrs << attr.to_s unless cloaked_attrs.include?(attr.to_s)}
+      cloaked_attrs
     end
     
     def self.attr_uncloaked(*attrs)
       attrs.each{|attr| cloaked_attrs.delete(attr.to_s)}
+      cloaked_attrs
+    end
+    
+    private
+    def self.cloaked_attrs=(attrs)
+      inheritable_attributes[:cloaked_attrs] = attrs
     end
   end
 end
